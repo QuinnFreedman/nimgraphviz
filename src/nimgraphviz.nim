@@ -3,11 +3,11 @@
 # Nim bindings for the GraphViz tool and the DOT graph language
 
 ## The `nimgraphviz` module is a library for making graphs using
-## `GraphViz <http://www.graphviz.org>` based on
-## `PyGraphviz <http://pygraphviz.github.io>`.
+## `GraphViz <http://www.graphviz.org>`_ based on
+## `PyGraphviz <http://pygraphviz.github.io>`_.
 ##
 ## To export images, you must have GraphViz installed. Download it here:
-## `https://graphviz.gitlab.io/download <https://graphviz.gitlab.io/download>`
+## `https://graphviz.gitlab.io/download <https://graphviz.gitlab.io/download>`_
 ##
 ## Here is an example of creating a simple graph:
 ##
@@ -51,6 +51,8 @@ proc setGraphVizPath*(path: string) =
     ## if it is not in your PATH.
     ## should end in a delimiter ("``/``" or "``\``")
     GV_PATH = path
+
+type GraphVizException = object of Exception
 
 type Edge* = tuple
     a, b, key: string
@@ -178,10 +180,12 @@ proc addNode*(self: var Graph, key: string,
         self.nodeAttrs[key] = attrs.toTable
 
 iterator iterNodes*(self: Graph): string =
+    ## Iterates over all of the nodes in the graph
     for node in self.nodeAttrs.keys:
         yield node
 
 proc nodes*(self: Graph): seq[string] =
+    ## Returns a ``seq`` of the nodes in the graph
     seqFromIterImpl[string](self.iterNodes)
 
 proc degree*(self: Graph, node: string): int =
@@ -219,6 +223,8 @@ proc outDegree*(self: Graph, node: string): int =
 
 
 proc exportDot*(self: Graph): string =
+    ## Returns a string describing the graph GraphViz's
+    ## `dot language <https://en.wikipedia.org/wiki/DOT_(graph_description_language)>`_.
     proc attrList(attr: Table[string, string]): seq[string] =
         result = newSeq[string]()
         for pair in attr.pairs:
@@ -284,7 +290,23 @@ proc checkGvInstalled: bool =
         return false
 
 proc exportImage*(self: Graph, fileName:string=nil,
-                  layout="dot", format="png:cairo") =
+                  layout="dot", format="png") =
+    ## Exports the graph as an image file.
+    ##
+    ## ``filename`` - the name of the file to export to. Should include ".png"
+    ## or the appropriate file extension. If none is given, it will default to
+    ## the name of the graph. If that is ``nil``, it will default to
+    ## ``graph.png``
+    ##
+    ## ``layout`` - which of the GraphViz layout engines to use. Default is
+    ## ``dot``. Can be one of: ``dot``, ``neato``, ``fdp``, ``sfdp``, ``twopi``,
+    ## ``circo`` (or others if you have them installed).
+    ##
+    ## ``format`` - the output format to export to. The default is ``png``.
+    ## You can specify more details with
+    ## ``"{format}:{rendering engine}:{library}"``.
+    ## (See `GV command-line docs <http://www.graphviz.org/doc/info/command.html>`_
+    ## for more details)
     let file =
         if fileName.isNil and not self.name.isNil:
             &"{self.name}.png"
@@ -303,7 +325,8 @@ proc exportImage*(self: Graph, fileName:string=nil,
     let args = [
         &"-K{layout}",
         &"-o{file}",
-        &"-T{format}"
+        &"-T{format}",
+        "-q"
     ]
     let process = startProcess(command, args=args, options={poUsePath})
     let stdin = process.inputStream
@@ -318,7 +341,7 @@ proc exportImage*(self: Graph, fileName:string=nil,
       elif not running(process): break
     close(process)
     if not result.string.isNilOrWhitespace:
-        echo result.string
+        raise newException(GraphVizException, result.string)
 
 
 if isMainModule:
