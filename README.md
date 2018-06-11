@@ -8,10 +8,12 @@ To use it, add
 ```
 requires "nimgraphviz >= 0.1.0"
 ```
-to your `.nimble` file
+to your `.nimble` file.
 
 To export images, you must have GraphViz installed. Download it here:
-[https://graphviz.gitlab.io/download](https://graphviz.gitlab.io/download)
+[https://graphviz.gitlab.io/download](https://graphviz.gitlab.io/download).
+
+Read the docs [here](https://quinnfreedman.github.io/nimgraphviz/).
 
 Here is an example of creating a simple graph:
 
