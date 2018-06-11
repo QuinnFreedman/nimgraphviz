@@ -1,8 +1,8 @@
 # nimgraphviz
 
 The `nimgraphviz` module is a library for making graphs using
-[GraphViz][http://www.graphviz.org] based on
-[PyGraphviz][http://pygraphviz.github.io].
+[GraphViz](http://www.graphviz.org) based on
+[PyGraphviz](http://pygraphviz.github.io).
 
 To use it, add
 ```
@@ -11,7 +11,7 @@ requires "nimgraphviz >= 0.1.0"
 to your `.nimble` file
 
 To export images, you must have GraphViz installed. Download it here:
-[https://graphviz.gitlab.io/download][https://graphviz.gitlab.io/download]`
+[https://graphviz.gitlab.io/download](https://graphviz.gitlab.io/download)
 
 Here is an example of creating a simple graph:
 
