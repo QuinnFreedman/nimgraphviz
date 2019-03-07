@@ -68,7 +68,7 @@ type Graph* = object
     nodeAttrs: Table[string, Table[string, string]]
 
 
-proc initGraph*(name:string=nil, directed=false): Graph =
+proc initGraph*(name:string="", directed=false): Graph =
     return Graph(
         name: name,
         isDirected: directed,
@@ -79,7 +79,7 @@ proc initGraph*(name:string=nil, directed=false): Graph =
     )
 
 
-proc addEdge*(self: var Graph, a, b: string, key: string = nil) =
+proc addEdge*(self: var Graph, a, b: string, key: string = "") =
     ## the same as ``addEdge*(self: var Graph, a, b: string, key: string, attrs: openArray[(string, string)])``
     ## but without attributes and ``key`` is optional
     let edge = (a, b, key)
@@ -241,9 +241,7 @@ proc exportDot*(self: Graph): string =
         if self.isDirected: "digraph"
         else: "graph"
 
-    let name =
-        if self.name.isNil: ""
-        else: self.name
+    let name = self.name
 
     result = &"strict {graphType} {name} {{\n"
     result &= "/*\n" &
@@ -271,7 +269,7 @@ proc exportDot*(self: Graph): string =
         else: "--"
 
     for edge in self.iterEdges():
-        if not edge.key.isNil:
+        if len(edge.key) != 0:
             result &= &"//key={edge.key}\n"
         let attrs =
             if edge in self.edgeAttrs:
@@ -289,7 +287,7 @@ proc checkGvInstalled: bool =
     except Exception:
         return false
 
-proc exportImage*(self: Graph, fileName:string=nil,
+proc exportImage*(self: Graph, fileName:string="",
                   layout="dot", format="png") =
     ## Exports the graph as an image file.
     ##
@@ -308,9 +306,9 @@ proc exportImage*(self: Graph, fileName:string=nil,
     ## (See `GV command-line docs <http://www.graphviz.org/doc/info/command.html>`_
     ## for more details)
     let file =
-        if fileName.isNil and not self.name.isNil:
+        if len(fileName) != 0 and len(self.name) != 0:
             &"{self.name}.png"
-        elif fileName.isNil:
+        elif len(fileName) == 0:
             "graph.png"
         else:
             fileName
@@ -318,7 +316,7 @@ proc exportImage*(self: Graph, fileName:string=nil,
     let command = GV_PATH & "dot"
 
     if not checkGvInstalled():
-        raise newException(SystemError, &"Unable to find the GraphViz binary. Do you have GraphViz installed and in your PATH? (Tried to run command `{command}`. If `dot` is not in your path, you can call `setGraphVizPath()` to tell nimGraphViz where it is.")
+        raise newException(OSError, &"Unable to find the GraphViz binary. Do you have GraphViz installed and in your PATH? (Tried to run command `{command}`. If `dot` is not in your path, you can call `setGraphVizPath()` to tell nimGraphViz where it is.")
 
     let EOT: char = cast[char](26)
     let text = self.exportDot() & EOT
