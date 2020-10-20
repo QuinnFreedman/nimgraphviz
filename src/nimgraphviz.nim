@@ -43,6 +43,7 @@ import
   osproc,
   streams,
   sets
+export tables
 
 var GV_PATH = ""
 
