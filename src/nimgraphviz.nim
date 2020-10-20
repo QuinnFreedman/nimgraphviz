@@ -289,7 +289,7 @@ proc checkGvInstalled: bool =
     return false
 
 proc exportImage*(self: Graph, fileName:string="",
-          layout="dot", format="png") =
+          layout="dot", format="svg") =
   ## Exports the graph as an image file.
   ##
   ## ``filename`` - the name of the file to export to. Should include ".png"
@@ -308,9 +308,9 @@ proc exportImage*(self: Graph, fileName:string="",
   ## for more details)
   let file =
     if len(fileName) != 0 and len(self.name) != 0:
-      &"{self.name}.png"
+      &"{self.name}.{format}"
     elif len(fileName) == 0:
-      "graph.png"
+      &"graph.{format}"
     else:
       fileName
 
