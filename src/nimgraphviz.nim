@@ -331,8 +331,8 @@ proc exportImage*(self: Graph, fileName:string="",
 
 if isMainModule:
   var graph = initGraph(directed=true)
-  graph.graphAttr.add("fontsize", "32")
-  graph.graphAttr.add("label", "Test Graph")
+  graph.graphAttr["fontsize"] = "32"
+  graph.graphAttr["label"] = "Test Graph"
   graph.addEdge("a", "b", "a-to-b", [("label", "A to B")])
   graph.addEdge("c", "b", "c-to-b", [("style", "dotted")])
   graph.addEdge("b", "a", "b-to-a")
