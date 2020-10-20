@@ -42,7 +42,8 @@ import
   strformat,
   osproc,
   streams,
-  sets
+  sets,
+  shell
 export tables
 
 var GV_PATH = ""
@@ -319,29 +320,14 @@ proc exportImage*(self: Graph, fileName:string="",
   if not checkGvInstalled():
     raise newException(OSError, &"Unable to find the GraphViz binary. Do you have GraphViz installed and in your PATH? (Tried to run command `{command}`. If `dot` is not in your path, you can call `setGraphVizPath()` to tell nimGraphViz where it is.")
 
-  let EOT: char = cast[char](26)
-  let text = self.exportDot() & EOT
-  let args = [
-    &"-K{layout}",
-    &"-o{file}",
-    &"-T{format}",
-    "-q"
-  ]
-  let process = startProcess(command, args=args, options={poUsePath})
-  let stdin = process.inputStream
-  stdin.write(text)
-  var stdout = outputStream(process)
-  var result = TaintedString""
-  var line = newStringOfCap(120).TaintedString
-  while true:
-    if stdout.readLine(line):
-    result.string.add(line.string)
-    result.string.add("\n")
-    elif not running(process): break
-  close(process)
-  if not result.string.isNilOrWhitespace:
-    raise newException(GraphVizException, result.string)
+  let text = self.exportDot()
+  let args = &"-K{layout} -o{file} -T{format} -q"
+  let dotFile = file.replace(&".{format}", ".dot")
+  writeFile(dotFile, text)
 
+  shell:
+    ($command) ($dotFile) ($args)
+    rm ($dotFile)
 
 if isMainModule:
   var graph = initGraph(directed=true)
