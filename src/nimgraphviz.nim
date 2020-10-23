@@ -65,6 +65,7 @@ type Graph* = object
   graphAttr*: Table[string, string]  ## A table of key-value pairs
                      ## describing the layout and
                      ## appearence of the graph
+  subGraphs: seq[Graph] ## a graph may have multiple sub graphs
   edgesTable: Table[string, HashSet[Edge]]
   edgeAttrs: Table[Edge, Table[string, string]]
   nodeAttrs: Table[string, Table[string, string]]
@@ -80,6 +81,9 @@ proc initGraph*(name:string="", directed=false): Graph =
     nodeAttrs: initTable[string, Table[string, string]]()
   )
 
+proc addGraph*(self: var Graph, g: Graph) =
+  ## adds the given graph `g` as a subgraph to `self`
+  self.subGraphs.add g
 
 proc addEdge*(self: var Graph, a, b: string, key: string = "") =
   ## the same as ``addEdge*(self: var Graph, a, b: string, key: string, attrs: openArray[(string, string)])``
@@ -274,6 +278,13 @@ proc exportEdges(g: Graph): string =
       else: ""
     result &= &"{edge.a} {edgeSymbol} {edge.b} {attrs};\n"
 
+proc exportSubGraphs(g: Graph): string =
+  for i, sub in g.subGraphs:
+    result &= &"subgraph cluster_{i} " & "{\n"
+    result &= sub.exportNodes()
+    result &= sub.exportEdges()
+    result &= "}\n\n"
+
 proc exportDot*(self: Graph): string =
   ## Returns a string describing the graph GraphViz's
   ## `dot language <https://en.wikipedia.org/wiki/DOT_(graph_description_language)>`_.
@@ -285,6 +296,8 @@ proc exportDot*(self: Graph): string =
   let name = self.name
 
   result = &"strict {graphType} {name} {{\n"
+  result &= self.exportSubGraphs()
+
   result &= self.exportAttributes()
   result &= self.exportNodes()
   result &= self.exportEdges()
