@@ -84,6 +84,7 @@ proc initGraph*(name:string="", directed=false): Graph =
 proc addEdge*(self: var Graph, a, b: string, key: string = "") =
   ## the same as ``addEdge*(self: var Graph, a, b: string, key: string, attrs: openArray[(string, string)])``
   ## but without attributes and ``key`` is optional
+  let key = if key.len == 0: &"{a}-to-{b}" else: key
   let edge = (a, b, key)
   if not (a in self.nodeAttrs):
     self.nodeAttrs[a] = initTable[string, string](4)
@@ -101,7 +102,7 @@ proc addEdge*(self: var Graph, a, b: string, key: string = "") =
     self.edgesTable[b] = [edge].toSet
 
 
-proc addEdge*(self: var Graph, a, b: string, key: string,
+proc addEdge*(self: var Graph, a, b: string, key = "",
         attrs: openArray[(string, string)]) =
   ## Adds an edge to the graph connecting nodes ``a`` and ``b``.
   ## If the nodes don't already exist in the graph, they will be
@@ -122,6 +123,7 @@ proc addEdge*(self: var Graph, a, b: string, key: string,
   ##   graph.addEdge("a", "b", nil, [("style", "dotted")])
   ##
   ## will create a graph with a single dotted, blue edge
+  let key = if key.len == 0: &"{a}-to-{b}" else: key
   self.addEdge(a, b, key)
 
   let edge = (a, b, key)
