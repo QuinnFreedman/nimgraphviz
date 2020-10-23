@@ -225,21 +225,58 @@ proc outDegree*(self: Graph, node: string): int =
   else:
     result = -1
 
+proc attrList(attr: Table[string, string]): seq[string] =
+  result = newSeq[string]()
+  for pair in attr.pairs:
+    let (key, value) = pair
+    result.add(&"{key}=\"{value}\"")
+
+proc exportAttrList(attr: Table[string, string]): string =
+  let pairs = attrList(attr)
+  if pairs.len == 0:
+    return ""
+  return "[" & pairs.join(", ") & "]"
+
+
+proc exportAttributes(g: Graph): string =
+  result &= "/*\n" &
+        " * Graph attributes:\n" &
+        " */\n"
+  result &= attrList(g.graphAttr)
+      .map(proc(a: string): string = &"{a};\n")
+      .join()
+  result &= "\n\n"
+
+proc exportNodes(g: Graph): string =
+  result &= "/*\n" &
+        " * Nodes:\n" &
+        " */\n"
+  for pair in g.nodeAttrs.pairs:
+    let (node, attrs) = pair
+    result &= &"{node} {exportAttrList(attrs)};\n"
+  result &= "\n\n"
+
+proc exportEdges(g: Graph): string =
+  result &= "/*\n" &
+        " * Edges:\n" &
+        " */\n"
+
+  let edgeSymbol =
+    if g.isDirected: "->"
+    else: "--"
+
+  for edge in g.iterEdges():
+    if len(edge.key) != 0:
+      result &= &"//key={edge.key}\n"
+    let attrs =
+      if edge in g.edgeAttrs:
+        exportAttrList(g.edgeAttrs[edge])
+      else: ""
+    result &= &"{edge.a} {edgeSymbol} {edge.b} {attrs};\n"
 
 proc exportDot*(self: Graph): string =
   ## Returns a string describing the graph GraphViz's
   ## `dot language <https://en.wikipedia.org/wiki/DOT_(graph_description_language)>`_.
-  proc attrList(attr: Table[string, string]): seq[string] =
-    result = newSeq[string]()
-    for pair in attr.pairs:
-      let (key, value) = pair
-      result.add(&"{key}=\"{value}\"")
-
-  proc inlineAttrList(attr: Table[string, string]): string =
-    let pairs = attrList(attr)
-    if pairs.len == 0:
-      return ""
-    return "[" & pairs.join(", ") & "]"
 
   let graphType =
     if self.isDirected: "digraph"
@@ -248,38 +285,9 @@ proc exportDot*(self: Graph): string =
   let name = self.name
 
   result = &"strict {graphType} {name} {{\n"
-  result &= "/*\n" &
-        " * Graph attributes:\n" &
-        " */\n"
-  result &= attrList(self.graphAttr)
-      .map(proc(a: string): string = &"{a};\n")
-      .join()
-  result &= "\n\n"
-
-  result &= "/*\n" &
-        " * Nodes:\n" &
-        " */\n"
-  for pair in self.nodeAttrs.pairs:
-    let (node, attrs) = pair
-    result &= &"{node} {inlineAttrList(attrs)};\n"
-
-  result &= "\n\n"
-  result &= "/*\n" &
-        " * Edges:\n" &
-        " */\n"
-
-  let edgeSymbol =
-    if self.isDirected: "->"
-    else: "--"
-
-  for edge in self.iterEdges():
-    if len(edge.key) != 0:
-      result &= &"//key={edge.key}\n"
-    let attrs =
-      if edge in self.edgeAttrs:
-        inlineAttrList(self.edgeAttrs[edge])
-      else: ""
-    result &= &"{edge.a} {edgeSymbol} {edge.b} {attrs};\n"
+  result &= self.exportAttributes()
+  result &= self.exportNodes()
+  result &= self.exportEdges()
 
   result &= "}\n"
 
