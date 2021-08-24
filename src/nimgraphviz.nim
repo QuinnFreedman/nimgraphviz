@@ -318,8 +318,7 @@ proc exportImage*(self: Graph, fileName:string="",
     if not checkGvInstalled():
         raise newException(OSError, &"Unable to find the GraphViz binary. Do you have GraphViz installed and in your PATH? (Tried to run command `{command}`. If `dot` is not in your path, you can call `setGraphVizPath()` to tell nimGraphViz where it is.")
 
-    let EOT: char = cast[char](26)
-    let text = self.exportDot() & EOT
+    let text = self.exportDot()
     let args = [
         &"-K{layout}",
         &"-o{file}",
@@ -328,18 +327,14 @@ proc exportImage*(self: Graph, fileName:string="",
     ]
     let process = startProcess(command, args=args, options={poUsePath})
     let stdin = process.inputStream
+    let stdout = process.outputStream
     stdin.write(text)
-    var stdout = outputStream(process)
-    var result = TaintedString""
-    var line = newStringOfCap(120).TaintedString
-    while true:
-      if stdout.readLine(line):
-        result.string.add(line.string)
-        result.string.add("\n")
-      elif not running(process): break
-    close(process)
-    if not result.string.isNilOrWhitespace:
-        raise newException(GraphVizException, result.string)
+    stdin.close()
+    let errcode = process.waitForExit()
+    let errormsg = stdout.readAll()
+    process.close()
+    if errcode != 0:
+        raise newException(GraphVizException, errormsg)
 
 
 if isMainModule:
