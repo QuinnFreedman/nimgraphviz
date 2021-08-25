@@ -40,6 +40,7 @@ import
   sequtils,
   strutils,
   strformat,
+  os,
   osproc,
   streams,
   sets,
@@ -344,34 +345,54 @@ proc checkGvInstalled: bool =
   except Exception:
     return false
 
-proc exportImage*(self: Graph, fileName:string="",
-          layout="dot", format="png") =
+proc exportImage*(self: Graph, fileName="",
+          layout="dot", format="") =
   ## Exports the graph as an image file.
   ##
   ## ``filename`` - the name of the file to export to. Should include ".png"
   ## or the appropriate file extension. If none is given, it will default to
   ## the name of the graph. If that is ``nil``, it will default to
-  ## ``graph.png``
+  ## ``graph.svg``.
   ##
   ## ``layout`` - which of the GraphViz layout engines to use. Default is
   ## ``dot``. Can be one of: ``dot``, ``neato``, ``fdp``, ``sfdp``, ``twopi``,
   ## ``circo`` (or others if you have them installed).
   ##
-  ## ``format`` - the output format to export to. The default is ``png``.
+  ## ``format`` - the output format to export to. The default is ``svg``. If not specified, it is deduced from the file name.
   ## You can specify more details with
   ## ``"{format}:{rendering engine}:{library}"``.
   ## (See `GV command-line docs <http://www.graphviz.org/doc/info/command.html>`_
   ## for more details)
-  let file =
-    if len(fileName) != 0 and len(self.name) != 0:
-      &"{self.name}.{format}"
-    elif len(fileName) == 0:
-      &"graph.{format}"
-    else:
-      fileName
+
+  # This blocks determines the output file name and its content type
+  # fileName has precedence over self.name
+  # The content type is deduced from the file name unless explicitely specified.
+  var dir, name, ext :string
+  if len(fileName) != 0:
+    (dir, name, ext) = splitFile(fileName)
+    if len(dir) == 0 :
+      dir = "." # current dir
+  elif len(self.name) != 0:
+    dir = "." # current dir
+    name = self.name
+    ext = "." & format
+  else :
+    dir = "."
+    name = "graph" # default name : "graph"
+    ext = "." & format
+
+  if ext == "." :
+    ext = ".svg" # default format : SVG
+
+  let actual_format =
+    if format != "" :
+       format
+    else :
+      ext[1..^1] # remove the '.' in first position
+  let file = &"{dir}/{name}{ext}"
+  
 
   let command = GV_PATH & "dot"
-
   if not checkGvInstalled():
     raise newException(OSError, &"Unable to find the GraphViz binary. Do you have GraphViz installed and in your PATH? (Tried to run command `{command}`. If `dot` is not in your path, you can call `setGraphVizPath()` to tell nimGraphViz where it is.")
 
@@ -379,7 +400,7 @@ proc exportImage*(self: Graph, fileName:string="",
   let args = [
     &"-K{layout}",
     &"-o{file}",
-    &"-T{format}",
+    &"-T{actual_format}",
     "-q"
   ]
   let process = startProcess(command, args=args, options={poUsePath})
@@ -420,4 +441,15 @@ if isMainModule:
   echo "\nExporting graph as PNG..."
   # set the location of the `dot` program if not in your path:
   # setGraphVizPath(r"C:\Program Files (x86)\Graphviz2.38\bin\")
-  graph.exportImage("test_graph.png")
+
+  graph.exportImage(format="png")
+  # graph.exportImage("test_graph.json")
+  # graph.exportImage()
+  # graph.exportImage("test_graph.png", format="svg")
+  #[
+  Files these calls create (in order) :
+  - graph.png, containing PNG data
+  # - test_graph.json, containing JSON data
+  # - graph.svg, containing SVG data
+  # - test_graph.png, __containing SVG data__ (yes it's legit)
+  ]#
