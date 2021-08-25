@@ -13,7 +13,7 @@
 ##
 ## .. code-block:: nim
 ##    # create a directed graph
-##    var graph = initGraph(directed=true)
+##    var graph = newGraph(directed=true)
 ##
 ##    # set some attributes of the graph:
 ##    graph.graphAttr.add("fontsize", "32")
@@ -56,10 +56,6 @@ proc setGraphVizPath*(path: string) =
 
 type GraphVizException = object of Exception
 
-
-
-proc initGraph*(name:string="", directed=false): Graph =
-  return Graph(
 type
   Edge* = tuple
     a, b, key: string
@@ -82,13 +78,23 @@ type
     of gkSubgraph:
       id: int
       clusterName*: string
+
+proc newGraph*(name: string = "",
+               directed = false,
+               kind: GraphKind = gkGraph): Graph =
+  result = Graph(
     name: name,
     isDirected: directed,
     graphAttr: initTable[string, string](),
     edgesTable: initTable[string, HashSet[Edge]](),
     edgeAttrs: initTable[Edge, Table[string, string]](),
-    nodeAttrs: initTable[string, Table[string, string]]()
+    nodeAttrs: initTable[string, Table[string, string]](),
+    kind: kind
   )
+
+proc initGraph*(name: string = "", directed = false): Graph {.deprecated: "`initGraph` is " &
+  " deprecated in favor of `newGraph` as `Graph` is a `ref object`.".} =
+  result = newGraph(name, directed)
 
 proc addGraph*(self: var Graph, g: Graph) =
   ## adds the given graph `g` as a subgraph to `self`
@@ -363,7 +369,7 @@ proc exportImage*(self: Graph, fileName:string="",
     rm ($dotFile)
 
 if isMainModule:
-  var graph = initGraph(directed=true)
+  var graph = newGraph(directed=true)
   graph.graphAttr["fontsize"] = "32"
   graph.graphAttr["label"] = "Test Graph"
   graph.addEdge("a", "b", "a-to-b", [("label", "A to B")])
