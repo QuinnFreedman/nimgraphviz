@@ -128,12 +128,12 @@ proc addEdge*(self: var Graph, a, b: string, key: string = "") =
   if a in self.edgesTable:
     self.edgesTable[a].incl(edge)
   else:
-    self.edgesTable[a] = [edge].toSet
+    self.edgesTable[a] = [edge].toHashSet
 
   if b in self.edgesTable:
     self.edgesTable[b].incl(edge)
   else:
-    self.edgesTable[b] = [edge].toSet
+    self.edgesTable[b] = [edge].toHashSet
 
 
 proc addEdge*(self: var Graph, a, b: string, key = "",
