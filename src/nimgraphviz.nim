@@ -90,15 +90,18 @@ proc initGraph*(name: string = "", directed = false): Graph {.deprecated: "`init
   " deprecated in favor of `newGraph` as `Graph` is a `ref object`.".} =
   result = newGraph(name, directed)
 
+proc ensureSafeName(key:string) {.inline.} =
+  if not key.validIdentifier() :
+    raise newException(GraphVizException, "Edge and node names must be valid (C-wise) identifiers")
+
 proc addNode*(self: var Graph, key: string, attrs: openArray[(string, string)])
 
-func sanitize(s: string): string = "\"" & s & "\""
-
 proc newSubgraph*(g: var Graph, name: string): Graph =
+  name.ensureSafeName()
   result = newGraph(name = name, directed = true, kind = gkSubgraph)
   result.graphAttr["style"] = "filled"
   result.graphAttr["label"] = name # ""
-  result.addNode(name.sanitize, [("style", "plaintext")])
+  result.addNode(name, [("style", "plaintext")])
   result.id = g.subGraphs.len
   result.clusterName = "cluster_" & $result.id
   g.subGraphs.add result
@@ -112,6 +115,9 @@ proc addGraph*(self: var Graph, g: Graph) =
 proc addEdge*(self: var Graph, a, b: string, key: string = "") =
   ## the same as ``addEdge*(self: var Graph, a, b: string, key: string, attrs: openArray[(string, string)])``
   ## but without attributes and ``key`` is optional
+  a.ensureSafeName()
+  b.ensureSafeName()
+
   let key = if key.len == 0: &"{a}-to-{b}" else: key
   let edge = (a, b, key)
   if not (a in self.nodeAttrs):
@@ -151,6 +157,10 @@ proc addEdge*(self: var Graph, a, b: string, key = "",
   ##   graph.addEdge("a", "b", nil, [("style", "dotted")])
   ##
   ## will create a graph with a single dotted, blue edge
+
+  # -- unnecessary, done in the other addEdge()
+  # a.ensureSafeName()
+  # b.ensureSafeName()
   let key = if key.len == 0: &"{a}-to-{b}" else: key
   self.addEdge(a, b, key)
 
@@ -204,6 +214,7 @@ proc addNode*(self: var Graph, key: string,
   ## ``attrs`` is a set of key-value pairs describing layout
   ## attributes for the node. You can call ``addNode()`` for
   ## an existing node to update its attributes
+  key.ensureSafeName()
   if key in self.nodeAttrs:
     for pair in attrs:
       let (k, v) = pair
@@ -416,7 +427,7 @@ when isMainModule:
   graph.addEdge("b", "a", "b-to-a")
   graph.addNode("c", [("color", "blue"), ("shape", "box"),
             ("style", "filled"), ("fontcolor", "white")])
-  graph.addNode("d", [("lable", "node")])
+  graph.addNode("&d", [("lable", "node")])
 
   assert graph.nodes.len == 4
   assert graph.edges.len == 3
