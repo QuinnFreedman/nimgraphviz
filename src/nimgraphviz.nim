@@ -390,7 +390,7 @@ proc exportImage*(self: Graph, fileName="",
     else :
       ext[1..^1] # remove the '.' in first position
   let file = &"{dir}/{name}{ext}"
-  
+
 
   let command = GV_PATH & "dot"
   if not checkGvInstalled():
@@ -414,7 +414,10 @@ proc exportImage*(self: Graph, fileName="",
   if errcode != 0:
     raise newException(GraphVizException, errormsg)
 
-if isMainModule:
+
+
+
+when isMainModule:
   var graph = newGraph(directed=true)
   graph.graphAttr["fontsize"] = "32"
   graph.graphAttr["label"] = "Test Graph"
