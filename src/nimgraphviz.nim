@@ -56,23 +56,32 @@ proc setGraphVizPath*(path: string) =
 
 type GraphVizException = object of Exception
 
-type Edge* = tuple
-  a, b, key: string
-
-type Graph* = object
-  name*: string    ## The name of the graph
-  isDirected*: bool  ## Whether or not the graph is directed
-  graphAttr*: Table[string, string]  ## A table of key-value pairs
-                     ## describing the layout and
-                     ## appearence of the graph
-  subGraphs: seq[Graph] ## a graph may have multiple sub graphs
-  edgesTable: Table[string, HashSet[Edge]]
-  edgeAttrs: Table[Edge, Table[string, string]]
-  nodeAttrs: Table[string, Table[string, string]]
 
 
 proc initGraph*(name:string="", directed=false): Graph =
   return Graph(
+type
+  Edge* = tuple
+    a, b, key: string
+
+  GraphKind = enum
+    gkGraph, gkSubgraph
+
+  Graph* = ref object
+    name*: string    ## The name of the graph
+    isDirected*: bool  ## Whether or not the graph is directed
+    graphAttr*: Table[string, string]  ## A table of key-value pairs
+                       ## describing the layout and
+                       ## appearence of the graph
+    subGraphs: seq[Graph] ## a graph may have multiple sub graphs
+    edgesTable: Table[string, HashSet[Edge]]
+    edgeAttrs: Table[Edge, Table[string, string]]
+    nodeAttrs: Table[string, Table[string, string]]
+    case kind: GraphKind
+    of gkGraph: discard
+    of gkSubgraph:
+      id: int
+      clusterName*: string
     name: name,
     isDirected: directed,
     graphAttr: initTable[string, string](),
