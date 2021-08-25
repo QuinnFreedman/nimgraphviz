@@ -96,8 +96,23 @@ proc initGraph*(name: string = "", directed = false): Graph {.deprecated: "`init
   " deprecated in favor of `newGraph` as `Graph` is a `ref object`.".} =
   result = newGraph(name, directed)
 
+proc addNode*(self: var Graph, key: string, attrs: openArray[(string, string)])
+
+func sanitize(s: string): string = "\"" & s & "\""
+
+proc newSubgraph*(g: var Graph, name: string): Graph =
+  result = newGraph(name = name, directed = true, kind = gkSubgraph)
+  result.graphAttr["style"] = "filled"
+  result.graphAttr["label"] = name # ""
+  result.addNode(name.sanitize, [("style", "plaintext")])
+  result.id = g.subGraphs.len
+  result.clusterName = "cluster_" & $result.id
+  g.subGraphs.add result
+
 proc addGraph*(self: var Graph, g: Graph) =
   ## adds the given graph `g` as a subgraph to `self`
+  ## Note: this should not be required if the subgraph was created
+  ## using `newSubgraph`!
   self.subGraphs.add g
 
 proc addEdge*(self: var Graph, a, b: string, key: string = "") =
