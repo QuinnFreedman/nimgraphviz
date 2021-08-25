@@ -47,13 +47,6 @@ import
   shell
 export tables
 
-var GV_PATH = ""
-
-proc setGraphVizPath*(path: string) =
-  ## sets the directory to search for the GraphViz executable (``dot``)
-  ## if it is not in your PATH.
-  ## should end in a delimiter ("``/``" or "``\``")
-  GV_PATH = path
 
 type GraphVizException = object of Exception
 
@@ -337,16 +330,8 @@ proc exportDot*(self: Graph): string =
 
   result &= "}\n"
 
-proc checkGvInstalled: bool =
-  let command = GV_PATH & "dot"
-  try:
-    let (_, exitCode) = execCmdEx(&"{command} -V", options={poUsePath})
-    return exitCode >= 0
-  except Exception:
-    return false
-
 proc exportImage*(self: Graph, fileName="",
-          layout="dot", format="") =
+          layout="dot", format="", exec="dot") =
   ## Exports the graph as an image file.
   ##
   ## ``filename`` - the name of the file to export to. Should include ".png"
@@ -358,11 +343,15 @@ proc exportImage*(self: Graph, fileName="",
   ## ``dot``. Can be one of: ``dot``, ``neato``, ``fdp``, ``sfdp``, ``twopi``,
   ## ``circo`` (or others if you have them installed).
   ##
-  ## ``format`` - the output format to export to. The default is ``svg``. If not specified, it is deduced from the file name.
+  ## ``format`` - the output format to export to. The default is ``svg``.
+  ## If not specified, it is deduced from the file name.
   ## You can specify more details with
   ## ``"{format}:{rendering engine}:{library}"``.
   ## (See `GV command-line docs <http://www.graphviz.org/doc/info/command.html>`_
   ## for more details)
+  ##
+  ## ``exec`` - path to the ``dot`` command; use this when ``dot`` is not in
+  ## your PATH
 
   # This blocks determines the output file name and its content type
   # fileName has precedence over self.name
@@ -391,11 +380,6 @@ proc exportImage*(self: Graph, fileName="",
       ext[1..^1] # remove the '.' in first position
   let file = &"{dir}/{name}{ext}"
 
-
-  let command = GV_PATH & "dot"
-  if not checkGvInstalled():
-    raise newException(OSError, &"Unable to find the GraphViz binary. Do you have GraphViz installed and in your PATH? (Tried to run command `{command}`. If `dot` is not in your path, you can call `setGraphVizPath()` to tell nimGraphViz where it is.")
-
   let text = self.exportDot()
   let args = [
     &"-K{layout}",
@@ -403,7 +387,13 @@ proc exportImage*(self: Graph, fileName="",
     &"-T{actual_format}",
     "-q"
   ]
-  let process = startProcess(command, args=args, options={poUsePath})
+  let process =
+    try :
+      startProcess(exec, args=args, options={poUsePath})
+    except OSError :
+      # "command not found", but I think the default message is explicit enough
+      # the try/except block is just there to show where the error can arise
+      raise
   let stdin = process.inputStream
   let stdout = process.outputStream
   stdin.write(text)
@@ -445,7 +435,7 @@ when isMainModule:
   # set the location of the `dot` program if not in your path:
   # setGraphVizPath(r"C:\Program Files (x86)\Graphviz2.38\bin\")
 
-  graph.exportImage(format="png")
+  graph.exportImage(format="png", exec="echo")
   # graph.exportImage("test_graph.json")
   # graph.exportImage()
   # graph.exportImage("test_graph.png", format="svg")
