@@ -43,8 +43,8 @@ import
   os,
   osproc,
   streams,
-  sets,
-  shell
+  sets
+
 export tables
 
 
