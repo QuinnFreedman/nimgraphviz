@@ -345,7 +345,7 @@ proc checkGvInstalled: bool =
     return false
 
 proc exportImage*(self: Graph, fileName:string="",
-          layout="dot", format="svg") =
+          layout="dot", format="png") =
   ## Exports the graph as an image file.
   ##
   ## ``filename`` - the name of the file to export to. Should include ".png"
@@ -376,13 +376,22 @@ proc exportImage*(self: Graph, fileName:string="",
     raise newException(OSError, &"Unable to find the GraphViz binary. Do you have GraphViz installed and in your PATH? (Tried to run command `{command}`. If `dot` is not in your path, you can call `setGraphVizPath()` to tell nimGraphViz where it is.")
 
   let text = self.exportDot()
-  let args = &"-K{layout} -o{file} -T{format} -q"
-  let dotFile = file.replace(&".{format}", ".dot")
-  writeFile(dotFile, text)
-
-  shell:
-    ($command) ($dotFile) ($args)
-    rm ($dotFile)
+  let args = [
+    &"-K{layout}",
+    &"-o{file}",
+    &"-T{format}",
+    "-q"
+  ]
+  let process = startProcess(command, args=args, options={poUsePath})
+  let stdin = process.inputStream
+  let stdout = process.outputStream
+  stdin.write(text)
+  stdin.close()
+  let errcode = process.waitForExit()
+  let errormsg = stdout.readAll()
+  process.close()
+  if errcode != 0:
+    raise newException(GraphVizException, errormsg)
 
 if isMainModule:
   var graph = newGraph(directed=true)
