@@ -310,7 +310,8 @@ proc exportEdges(g: Graph): string =
 
 proc exportSubGraphs(g: Graph): string =
   for i, sub in g.subGraphs:
-    result &= &"subgraph cluster_{i} " & "{\n"
+    doAssert sub.kind == gkSubgraph
+    result &= &"subgraph {sub.clusterName} " & "{\n"
     result &= sub.exportAttributes()
     result &= sub.exportNodes()
     result &= sub.exportEdges()
