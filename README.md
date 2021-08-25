@@ -19,7 +19,7 @@ Here is an example of creating a simple graph:
 
 ```nim
 # create a directed graph
-var graph = initGraph(directed=true)
+var graph = newGraph(directed=true)
 
 # set some attributes of the graph:
 graph.graphAttr.add("fontsize", "32")
