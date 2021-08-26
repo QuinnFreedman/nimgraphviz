@@ -6,7 +6,7 @@ The `nimgraphviz` module is a library for making graphs using
 
 To use it, add
 ```
-requires "nimgraphviz >= 0.1.0"
+requires "nimgraphviz >= 0.2.0"
 ```
 to your `.nimble` file.
 
