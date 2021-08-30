@@ -49,11 +49,27 @@ include "nimgraphviz/private/edges", "nimgraphviz/private/graphs"
 
 
 when isMainModule :
-  let main = newGraph()
-  let sub = newSubGraph(main)
+  let main = newGraph() # create a graph (strict, but not oriented)
+  let sub = newSubGraph(main) # the graph can have subgraph
+  # the subgraph can have subgraphs too!
 
-  main.addEdge("a"--"b")
+  # adding an edge, along with attributes
+  main.addEdge("a"--"b", ("label", "A to B"))
+
+  # attributes can also be added afterwards
   sub.addEdge("b"--"c")
-  sub.name = "cluster_whatever"
+  sub["b"--"c"]["style"] = "dotted"
 
+  # similar features are available for nodes
+  main["d"]["label"] = "This node stands alone"
+
+  # subgraphs whose name begin in "cluster" have a special meaning in DOT.
+  sub.name = "cluster_whatever"
+  sub["bgcolor"] = "grey" # hey, graph attributes can be set as well!
+
+  # if you want to export the graph in the DOT language,
+  # you can do it like this:
   echo main.exportDot()
+
+  # Export graph as PNG:
+  graph.exportImage("test_graph.png")

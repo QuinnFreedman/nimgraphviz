@@ -18,25 +18,27 @@ Read the docs [here](https://quinnfreedman.github.io/nimgraphviz/).
 Here is an example of creating a simple graph:
 
 ```nim
-# create a directed graph
-var graph = newGraph(directed=true)
+let main = newGraph() # create a graph (strict, but not oriented)
+let sub = newSubGraph(main) # the graph can have subgraph
+# the subgraph can have subgraphs too!
 
-# set some attributes of the graph:
-graph.graphAttr.add("fontsize", "32")
-graph.graphAttr.add("label", "Test Graph")
+# adding an edge, along with attributes
+main.addEdge("a"--"b", ("label", "A to B"))
 
-# add edges:
-# (if a node does not exist already it will be created automatically)
-graph.addEdge("a", "b", "a-to-b", [("label", "A to B")])
-graph.addEdge("c", "b", "c-to-b", [("style", "dotted")])
-graph.addEdge("b", "a", "b-to-a")
-graph.addNode("c", [("color", "blue"), ("shape", "box"),
-                        ("style", "filled"), ("fontcolor", "white")])
-graph.addNode("d", [("lable", "node")])
+# attributes can also be added afterwards
+sub.addEdge("b"--"c")
+sub["b"--"c"]["style"] = "dotted"
+
+# similar features are available for nodes
+main["d"]["label"] = "This node stands alone"
+
+# subgraphs whose name begin in "cluster" have a special meaning in DOT.
+sub.name = "cluster_whatever"
+sub["bgcolor"] = "grey" # hey, graph attributes can be set as well!
 
 # if you want to export the graph in the DOT language,
 # you can do it like this:
-# echo graph.exportDot()
+echo main.exportDot()
 
 # Export graph as PNG:
 graph.exportImage("test_graph.png")
