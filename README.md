@@ -1,3 +1,7 @@
+**Archived.** This library has been moved to https://github.com/Aveheuzed/nimgraphviz
+
+---
+
 # nimgraphviz
 
 The `nimgraphviz` module is a library for making graphs using
